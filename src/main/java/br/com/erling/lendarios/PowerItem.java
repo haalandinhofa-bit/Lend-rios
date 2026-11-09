@@ -7,6 +7,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -14,19 +15,9 @@ import net.minecraft.world.level.Level;
 
 public final class PowerItem extends Item {
     public enum Power {
-        SPEED,
-        JUMP,
-        HOME_COMPASS,
-        WATER_BREATHING,
-        DOLPHINS_GRACE,
-        FIRE_RESISTANCE,
-        NIGHT_VISION,
-        SLOW_FALLING,
-        HASTE,
-        REGENERATION,
-        LUCK,
-        HEALTH_BOOST,
-        COORDINATES
+        SPEED, JUMP, HOME_COMPASS, WATER_BREATHING, DOLPHINS_GRACE,
+        FIRE_RESISTANCE, NIGHT_VISION, SLOW_FALLING, HASTE,
+        REGENERATION, LUCK, HEALTH_BOOST, COORDINATES
     }
 
     private final Power power;
@@ -36,64 +27,72 @@ public final class PowerItem extends Item {
         this.power = power;
     }
 
+    /**
+     * O Lampião funciona continuamente: enquanto estiver na mão do jogador,
+     * a invisibilidade é renovada. Ao guardar o item, ela termina quase
+     * imediatamente.
+     */
+    @Override
+    public void inventoryTick(ItemStack stack, Level level, Entity entity,
+                              net.minecraft.world.entity.EquipmentSlot slot) {
+        super.inventoryTick(stack, level, entity, slot);
+
+        if (power != Power.NIGHT_VISION || level.isClientSide || !(entity instanceof Player player)) {
+            return;
+        }
+
+        boolean segurando = player.getMainHandItem() == stack || player.getOffhandItem() == stack;
+        if (segurando) {
+            // Renovação curta: o efeito só permanece enquanto o Lampião está na mão.
+            player.addEffect(new MobEffectInstance(
+                    MobEffects.INVISIBILITY,
+                    10,
+                    0,
+                    false,
+                    false,
+                    false
+            ));
+        }
+    }
+
     @Override
     public InteractionResult use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
-
-        if (!level.isClientSide) {
+        if (!level.isClientSide && power != Power.NIGHT_VISION) {
             activate(level, player);
             player.getCooldowns().addCooldown(stack, 20);
         }
-
         return InteractionResult.SUCCESS;
     }
 
     private void activate(Level level, Player player) {
         switch (power) {
-            case SPEED -> apply(player, MobEffects.MOVEMENT_SPEED, 45, 1,
-                    "A Bota do Vento aumentou sua velocidade!");
-            case JUMP -> apply(player, MobEffects.JUMP, 45, 1,
-                    "A Batata Saltitante melhorou seu salto!");
+            case SPEED -> apply(player, MobEffects.MOVEMENT_SPEED, 45, 1, "A Bota do Vento aumentou sua velocidade!");
+            case JUMP -> apply(player, MobEffects.JUMP, 45, 1, "A Batata Saltitante melhorou seu salto!");
             case HOME_COMPASS -> {
                 if (level instanceof ServerLevel serverLevel) {
                     BlockPos spawn = serverLevel.getSharedSpawnPos();
-                    player.displayClientMessage(Component.literal(
-                            "Ponto inicial do mundo: X " + spawn.getX()
-                                    + ", Y " + spawn.getY() + ", Z " + spawn.getZ()), true);
+                    player.displayClientMessage(Component.literal("Ponto inicial do mundo: X " + spawn.getX() + ", Y " + spawn.getY() + ", Z " + spawn.getZ()), true);
                 }
             }
-            case WATER_BREATHING -> apply(player, MobEffects.WATER_BREATHING, 90, 0,
-                    "Respiração aquática ativada!");
-            case DOLPHINS_GRACE -> apply(player, MobEffects.DOLPHINS_GRACE, 45, 0,
-                    "Você nada como um golfinho!");
-            case FIRE_RESISTANCE -> apply(player, MobEffects.FIRE_RESISTANCE, 60, 0,
-                    "Resistência ao fogo ativada!");
-            case NIGHT_VISION -> apply(player, MobEffects.NIGHT_VISION, 90, 0,
-                    "Visão noturna ativada!");
-            case SLOW_FALLING -> apply(player, MobEffects.SLOW_FALLING, 45, 0,
-                    "Queda lenta ativada!");
-            case HASTE -> apply(player, MobEffects.DIG_SPEED, 45, 1,
-                    "Mineração rápida ativada!");
-            case REGENERATION -> apply(player, MobEffects.REGENERATION, 20, 0,
-                    "Regeneração ativada!");
-            case LUCK -> apply(player, MobEffects.LUCK, 90, 1,
-                    "Sorte aumentada!");
-            case HEALTH_BOOST -> apply(player, MobEffects.HEALTH_BOOST, 60, 1,
-                    "Vida máxima aumentada temporariamente!");
+            case WATER_BREATHING -> apply(player, MobEffects.WATER_BREATHING, 90, 0, "Respiração aquática ativada!");
+            case DOLPHINS_GRACE -> apply(player, MobEffects.DOLPHINS_GRACE, 45, 0, "Você nada como um golfinho!");
+            case FIRE_RESISTANCE -> apply(player, MobEffects.FIRE_RESISTANCE, 60, 0, "Resistência ao fogo ativada!");
+            case SLOW_FALLING -> apply(player, MobEffects.SLOW_FALLING, 45, 0, "Queda lenta ativada!");
+            case HASTE -> apply(player, MobEffects.DIG_SPEED, 45, 1, "Mineração rápida ativada!");
+            case REGENERATION -> apply(player, MobEffects.REGENERATION, 20, 0, "Regeneração ativada!");
+            case LUCK -> apply(player, MobEffects.LUCK, 90, 1, "Sorte aumentada!");
+            case HEALTH_BOOST -> apply(player, MobEffects.HEALTH_BOOST, 60, 1, "Vida máxima aumentada temporariamente!");
             case COORDINATES -> {
                 BlockPos pos = player.blockPosition();
-                player.displayClientMessage(Component.literal(
-                        "Sua posição: X " + pos.getX()
-                                + ", Y " + pos.getY() + ", Z " + pos.getZ()), true);
+                player.displayClientMessage(Component.literal("Sua posição: X " + pos.getX() + ", Y " + pos.getY() + ", Z " + pos.getZ()), true);
             }
+            case NIGHT_VISION -> { /* controlado continuamente pelo inventoryTick */ }
         }
     }
 
-    private static void apply(Player player,
-                              net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect> effect,
-                              int seconds,
-                              int amplifier,
-                              String message) {
+    private static void apply(Player player, net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect> effect,
+                              int seconds, int amplifier, String message) {
         player.addEffect(new MobEffectInstance(effect, seconds * 20, amplifier));
         player.displayClientMessage(Component.literal(message), true);
     }
