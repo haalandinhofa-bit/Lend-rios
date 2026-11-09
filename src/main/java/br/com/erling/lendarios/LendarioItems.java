@@ -1,6 +1,8 @@
 package br.com.erling.lendarios;
 
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -39,7 +41,10 @@ public final class LendarioItems {
 
     private static DeferredItem<Item> relic(String id, PowerItem.Power power) {
         // Minecraft 1.21.4 exige que o Item.Properties receba a chave de registro.
-        ResourceKey<Item> key = ITEMS.key(id);
+        ResourceKey<Item> key = ResourceKey.create(
+                Registries.ITEM,
+                ResourceLocation.fromNamespaceAndPath(LendariosMod.MOD_ID, id)
+        );
         return ITEMS.register(id, () -> new PowerItem(new Item.Properties().setId(key), power));
     }
 }
