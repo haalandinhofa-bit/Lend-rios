@@ -4,7 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.player.Player;
@@ -37,15 +37,15 @@ public final class PowerItem extends Item {
     }
 
     @Override
-    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+    public InteractionResult use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
 
         if (!level.isClientSide) {
             activate(level, player);
-            player.getCooldowns().addCooldown(this, 20);
+            player.getCooldowns().addCooldown(stack, 20);
         }
 
-        return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
+        return InteractionResult.sidedSuccess(level.isClientSide);
     }
 
     private void activate(Level level, Player player) {
