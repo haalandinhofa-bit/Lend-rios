@@ -41,14 +41,16 @@ public final class PowerItem extends Item {
             return;
         }
 
-        boolean segurando = player.getMainHandItem() == stack || player.getOffhandItem() == stack;
+        boolean segurando = player.getMainHandItem().is(LendarioItems.LAMPIAO_LUMINOSO.get())
+                || player.getOffhandItem().is(LendarioItems.LAMPIAO_LUMINOSO.get());
         if (segurando) {
-            // Renovação curta: o efeito só permanece enquanto o Lampião está na mão.
+            // Renovação contínua e sem partículas/ícone. O prazo curto encerra
+            // o efeito logo depois que o Lampião sai das mãos.
             player.addEffect(new MobEffectInstance(
                     MobEffects.INVISIBILITY,
-                    10,
+                    2,
                     0,
-                    false,
+                    true,
                     false,
                     false
             ));
