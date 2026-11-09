@@ -34,8 +34,8 @@ public final class PowerItem extends Item {
      */
     @Override
     public void inventoryTick(ItemStack stack, Level level, Entity entity,
-                              net.minecraft.world.entity.EquipmentSlot slot) {
-        super.inventoryTick(stack, level, entity, slot);
+                              int inventorySlot, boolean isSelected) {
+        super.inventoryTick(stack, level, entity, inventorySlot, isSelected);
 
         if (power != Power.NIGHT_VISION || level.isClientSide || !(entity instanceof Player player)) {
             return;
