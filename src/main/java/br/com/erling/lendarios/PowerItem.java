@@ -45,7 +45,7 @@ public final class PowerItem extends Item {
             player.getCooldowns().addCooldown(stack, 20);
         }
 
-        return InteractionResult.sidedSuccess(level.isClientSide);
+        return InteractionResult.SUCCESS;
     }
 
     private void activate(Level level, Player player) {
